@@ -1,7 +1,9 @@
 """
 Training
 """
+import os
 import requests
+import yaml
 
 import numpy as np
 import tensorflow as tf
@@ -12,14 +14,21 @@ from model import load_or_build_model
 
 
 # globals
-gpt = load_or_build_model()
+gpt = load_or_build_model(verbose=True)
 optimizer = tf.keras.optimizers.Adam(learning_rate=config.LEARNING_RATE)
 
 
-def numerical_encoding(text, char_dict):
+def numerical_encoding(text: str, char_dict: dict) -> np.array:
     """
     First breaks text into a list of chars, then converts each to
     its numerical idx (np.array)
+
+    Args:
+        text (str): corpus to be vectorized
+        char_dict (dict): dictionary to map chars to indexes
+
+    Returns:
+        chars_list (np.array): vectorized corpus
     """
     chars_list = [ char for char in text ]
     chars_list = [ char_dict[char] for char in chars_list ]
@@ -27,10 +36,14 @@ def numerical_encoding(text, char_dict):
     return chars_list
 
 
-def get_text_matrix(sequence, len_input):
+def get_text_matrix(sequence: np.array, len_input: int) -> np.array:
     """
-    This generates a matrix containing all the sequences
+    Generates a matrix containing all sequences
     of length INPUT_LENGTH to be fed into the Network
+
+    Args:
+        sequence (np.array): array to be processed
+        len_input (int): length od model input
     """
     # create empty matrix
     X = np.empty((len(sequence)-len_input, len_input))
@@ -42,7 +55,17 @@ def get_text_matrix(sequence, len_input):
     return X
 
 
-def process_corpus():
+def process_corpus() -> (np.array, dict):
+    """
+    Text preprocessing steps: 1. Downloads corpus; 2. extracts set of
+    unique chars; 3. Map every char to its int; 3. vectorize text;
+    4. process vectorized text into a 2D array for model training
+    (a sliding window of text is produced)
+
+    Returns:
+        X (np.array): 2D array for model training
+        char2idx (dict): dictionary to preserve char-index mapping
+    """
     page = requests.get(config.CORPUS_URL)
     text = page.text
 
@@ -53,14 +76,13 @@ def process_corpus():
     # Map every letter in our alphabet to an int
     char2idx = {char[1]: char[0] for char in enumerate(unique_chars)}
 
-    # Produce a reverse dictionary to go back from int to str later
-    idx2char = {v: k for k, v in char2idx.items()}
-
+    # vectorize text
     encoded_text = numerical_encoding(text, char2idx)
 
+    # Sequence of vectorized chars to 2D array
     X = get_text_matrix(encoded_text, INPUT_LENGTH + 1)
 
-    return X
+    return X, char2idx
 
 
 @tf.function
@@ -79,7 +101,7 @@ def train_on_batch(x, y):
 
 
 def main():
-    X = process_corpus()
+    X, char2idx = process_corpus()
 
     loss_history = []
 
@@ -119,10 +141,15 @@ def main():
         plt.show()
 
     # Save model
-    gpt.save(os.path.join(os.getcwd(), "saved_models", config.MODEL_NAME))
+    gpt.save(os.path.join(os.getcwd(), "saved_models", config.MODEL_NAME+".h5"))
+
+    # Save char2idx mapping as yaml
+    yaml.dump(
+        char2idx,
+        open(os.path.join(os.getcwd(), "saved_models", f"{config.MODEL_NAME}_char_idx_map.yaml"), "w")
+    )
 
     return None
-
 
 
 if __name__ == "__main__":

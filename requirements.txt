@@ -1,3 +1,5 @@
 numpy
 tensorflow>2.1
 maximal>=1.0
+matplotlib
+tqdm

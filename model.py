@@ -13,17 +13,20 @@ from maximal.layers import (
 from config import config
 
 
-def build_model():
+def build_model() -> tf.keras.models.Model:
     """
     Builds a GPT using Maximal and TensorFlow.
     Args:   / (just needs config params)
     Returns: GPT model (tf.keras.models.Model)
     """
     # Define nodes of the graph
-    input_batch = Input(shape=(INPUT_LENGTH,), dtype=tf.int32)
-    embedding = PositionalEmbedding(INPUT_LENGTH, VOCAB_SIZE, DEPTH)
-    gpt_layers = [GPTLayer(depth=DEPTH, heads=HEADS, ff_nodes=FF_NODES) for _ in range(N_LAYERS)]
-    classification_layer = Dense(VOCAB_SIZE)
+    input_batch = Input(shape=(config.INPUT_LENGTH,), dtype=tf.int32)
+
+    embedding = PositionalEmbedding(config.INPUT_LENGTH, config.VOCAB_SIZE, config.DEPTH)
+
+    gpt_layers = [GPTLayer(depth=config.DEPTH, heads=config.HEADS, ff_nodes=config.FF_NODES) for _ in range(config.N_LAYERS)]
+
+    classification_layer = Dense(config.VOCAB_SIZE)
 
     # Build the computational graph
     x = embedding(input_batch)
@@ -39,18 +42,25 @@ def build_model():
     )
 
 
-def load_model():
+def load_or_build_model(verbose: bool =False) -> tf.keras.models.Model:
     """
-    If a model with a given name already exists
-    :return:
+    Checks if a model with name MODEL_NAME is already stored in /saved_models
+    folder. If present, loads the existing one (to train it further). If not, it
+    builds a new one.
+
+    Args:
+        verbose (bool): print model.summary() or not - defaults to False
     """
-    return gpt
+    filenames = os.listdir(os.path.join(os.getcwd(), "saved_models"))
 
+    if config.MODEL_NAME in filenames:
+        print(f"Loading existing model: {config.MODEL_NAME}.h5")
+        gpt = tf.keras.models.load_model(os.path.join(os.getcwd(), "saved_models", config.MODEL_NAME))
+    else:
+        print(f"Creating a new model: {config.MODEL_NAME}.h5")
+        gpt = build_model()
 
-def load_or_build_model():
-
-    # check if the model is
-
-    #
+    if verbose:
+        print(gpt.summary())
 
     return gpt

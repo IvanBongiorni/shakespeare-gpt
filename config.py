@@ -3,8 +3,16 @@ Configurations
 """
 from utils import StrMessages
 
+
 class config(StrMessages):
     MODEL_NAME = "gpt_maximal_00"
+
+    # NLG
+    N_GENERATION = 1000
+    TEMPERATURE = 1.0
+    TOP_K_SAMPLE = 10
+
+    # Model architecture
     INPUT_LENGTH = 128
     DEPTH = 512
     HEADS = 4
