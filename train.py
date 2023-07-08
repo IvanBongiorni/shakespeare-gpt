@@ -3,19 +3,15 @@ Training
 """
 import os
 import requests
-import yaml
+import time
 
 import numpy as np
 import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import matplotlib.pyplot as plt
 
 from config import config
 from model import load_or_build_model
-
-
-# globals
-gpt = load_or_build_model(verbose=True)
-optimizer = tf.keras.optimizers.Adam(learning_rate=config.LEARNING_RATE)
 
 
 def numerical_encoding(text: str, char_dict: dict) -> np.array:
@@ -80,13 +76,13 @@ def process_corpus() -> (np.array, dict):
     encoded_text = numerical_encoding(text, char2idx)
 
     # Sequence of vectorized chars to 2D array
-    X = get_text_matrix(encoded_text, INPUT_LENGTH + 1)
+    X = get_text_matrix(encoded_text, config.INPUT_LENGTH + 1)
 
     return X, char2idx
 
 
 @tf.function
-def train_on_batch(x, y):
+def train_on_batch(gpt, optimizer, x, y):
     with tf.GradientTape() as tape:
 
         batch_loss = tf.reduce_sum(
@@ -103,7 +99,12 @@ def train_on_batch(x, y):
 def main():
     X, char2idx = process_corpus()
 
+    config.VOCAB_SIZE = len(char2idx)
+
     loss_history = []
+
+    gpt = load_or_build_model(verbose=True)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=config.LEARNING_RATE)
 
     for epoch in range(config.N_EPOCHS):
         start = time.time()
@@ -120,7 +121,7 @@ def main():
             y = X[take:take + config.BATCH_SIZE, 1:]  # chars [1:129]
 
             # training step
-            current_loss = train_on_batch(x, y)
+            current_loss = train_on_batch(gpt, optimizer, x, y)
 
             # periodically store batch loss into history
             if iteration % 100 == 0:
@@ -142,12 +143,6 @@ def main():
 
     # Save model
     gpt.save(os.path.join(os.getcwd(), "saved_models", config.MODEL_NAME+".h5"))
-
-    # Save char2idx mapping as yaml
-    yaml.dump(
-        char2idx,
-        open(os.path.join(os.getcwd(), "saved_models", f"{config.MODEL_NAME}_char_idx_map.yaml"), "w")
-    )
 
     return None
 

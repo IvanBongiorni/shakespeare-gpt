@@ -12,7 +12,13 @@ class config(StrMessages):
     TEMPERATURE = 1.0
     TOP_K_SAMPLE = 10
 
+    # Training hyperparams
+    LEARNING_RATE = 10e-5
+    N_EPOCHS = 3
+    BATCH_SIZE = 64
+
     # Model architecture
+    VOCAB_SIZE = None  #placeholder
     INPUT_LENGTH = 128
     DEPTH = 512
     HEADS = 4

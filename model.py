@@ -1,6 +1,8 @@
 """
 Building GPT architecture
 """
+import os
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import Input, Dense
