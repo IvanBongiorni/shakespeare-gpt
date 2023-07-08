@@ -143,6 +143,7 @@ def main():
 
     # Save model
     gpt.save(os.path.join(os.getcwd(), "saved_models", config.MODEL_NAME+".h5"))
+    print(f"Model {config.MODEL_NAME}.h5 saved in {os.path.join(os.getcwd(),'saved_models')}")
 
     return None
 
