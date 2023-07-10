@@ -98,6 +98,8 @@ def main():
     while True:
         prompt = input("\nUser:\n")
 
+        # TODO: CHECK FOR EXIT BEFORE CHECK FOR INPUT LEN
+
         if len(prompt) < config.INPUT_LENGTH:
             print(f"Please provide a prompt of {config.INPUT_LENGTH}")
 
