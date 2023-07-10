@@ -4,6 +4,7 @@ Training
 import os
 import requests
 import time
+from pdb import set_trace as BP
 
 import numpy as np
 import tensorflow as tf
@@ -97,6 +98,10 @@ def train_on_batch(gpt, optimizer, x, y):
 
 
 def main():
+    """
+    Model training.
+
+    """
     X, char2idx = process_corpus()
 
     config.VOCAB_SIZE = len(char2idx)
@@ -106,6 +111,8 @@ def main():
     gpt = load_or_build_model(verbose=True)
     optimizer = tf.keras.optimizers.Adam(learning_rate=config.LEARNING_RATE)
 
+    print(f"\nStart model training for {config.N_EPOCHS} epochs\n")
+
     for epoch in range(config.N_EPOCHS):
         start = time.time()
 
@@ -114,7 +121,6 @@ def main():
         X = X[reshuffle]
 
         for iteration in range(X.shape[0] // config.BATCH_SIZE):
-
             # take new minibatch (with 1 char shift from x to y)
             take = iteration * config.BATCH_SIZE
             x = X[take:take + config.BATCH_SIZE, :-1]  # chars [0:128]
@@ -140,6 +146,8 @@ def main():
         plt.xlabel('Iterations')
         plt.ylabel('Loss (Sparse CCE)')
         plt.show()
+
+    # BP()
 
     # Save model
     gpt.save(os.path.join(os.getcwd(), "saved_models", config.MODEL_NAME+".h5"))

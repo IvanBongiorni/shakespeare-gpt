@@ -14,7 +14,7 @@ class config(StrMessages):
 
     # Training hyperparams
     LEARNING_RATE = 10e-5
-    N_EPOCHS = 3
+    N_EPOCHS = 1
     BATCH_SIZE = 64
 
     # Model architecture

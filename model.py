@@ -8,9 +8,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.models import Model
 import maximal
-from maximal.layers import (
-    PositionalEmbedding, GPTLayer
-)
+from maximal.layers import PositionalEmbedding, GPTLayer
 
 from config import config
 

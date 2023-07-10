@@ -1,16 +1,20 @@
 """
 Inference
 """
+import os
+
 import numpy as np
 import tensorflow as tf
-import maximal
+from maximal.layers import PositionalEmbedding, GPTLayer
+
 from tqdm import tqdm
 
 from config import config
-from models import load_or_build_model
+from train import process_corpus
 
 
 def generate_text(
+        gpt: tf.keras.models.Model,
         prompt: str,
         char2idx: dict,
         idx2char: dict,
@@ -37,7 +41,7 @@ def generate_text(
     assert len(prompt) >= config.INPUT_LENGTH, f"Prompt must be of {config.INPUT_LENGTH} character length"
 
     # If prompt is longer than INPUT_LENGTH crop it to last piece
-    if prompt > config.INPUT_LENGTH:
+    if len(prompt) > config.INPUT_LENGTH:
         prompt = prompt[-config.INPUT_LENGTH:]
 
     generated_text = []
@@ -71,24 +75,30 @@ def generate_text(
     return generated_text
 
 
-def nlg():
+def main():
     """
     Natural Language Generation.
     Starts an infinite loop that can be broken only via Ctrl+C or by
     typing "exit" as prompt.
     """
-    # Load model
+    # TODO: this is an overkill - change that, pickle dict locally
+    _, char2idx = process_corpus()
+    idx2char = {v: k for k, v in char2idx.items()}
+
     print(f"Loading model: {config.MODEL_NAME}.h5")
-    gpt = tf.keras.models.load_model(os.path.join(os.getcwd(), "saved_models", config.MODEL_NAME))
+    gpt = tf.keras.models.load_model(
+        os.path.join(os.getcwd(), "saved_models", config.MODEL_NAME+".h5"),
+        custom_objects = {"PositionalEmbedding": PositionalEmbedding, "GPTLayer": GPTLayer}
+    )
     print("Completed.")
 
     print(config.MSG_GREETINGS)
 
     # Start infinite loop
-    while true:
+    while True:
         prompt = input("\nUser:\n")
 
-        if prompt < config.INPUT_LENGTH:
+        if len(prompt) < config.INPUT_LENGTH:
             print(f"Please provide a prompt of {config.INPUT_LENGTH}")
 
             # If prompt too short send a shakespearean message
@@ -97,10 +107,10 @@ def nlg():
         elif prompt == "exit":
             print(config.MSG_FAREWELL)
             quit()
-
-        generated_text = generate_text(prompt=prompt)
-        print(f"\nShakespeare-GPT:\n{generated_text}\n")
+        else:
+            generated_text = generate_text(gpt, prompt, char2idx, idx2char)
+            print(f"\nShakespeare-GPT:\n{generated_text}\n")
 
 
 if __name__ == "__main__":
-    nlg()
+    main()
